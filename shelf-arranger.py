@@ -151,14 +151,18 @@ def main():
         df = pd.read_csv("call_numbers_pages.csv", dtype=str)
         df["pages"] = pd.to_numeric(df["pages"], errors="coerce")
 
+        # Records without an 050 have an empty class_letters (NaN); label them so they aren't dropped
+        df["class_letters"] = df["class_letters"].fillna("(none)")
+
         summary = df.groupby("class_letters").agg(
-            books=("control_number", "count"),
+            books=("title", "count"),
             total_pages=("pages", "sum"),
-            avg_pages=("pages", "mean"),
         ).reset_index()
 
-        summary.to_csv("class_summary.csv", index=False)
+        # Order A to Z
+        summary = summary.sort_values("class_letters", ascending=True).reset_index(drop=True)
 
+        summary.to_csv("class_summary.csv", index=False)
 
     print(f"Done. {count} records written to {OUTPUT_CSV}")
 
